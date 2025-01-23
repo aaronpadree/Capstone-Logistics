@@ -11,8 +11,16 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# # Get the database URI from environment variables
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 # Get the database URI from environment variables
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+
+if not app.config['SQLALCHEMY_DATABASE_URI']:
+    raise RuntimeError("DATABASE_URL is not set. Check your .env file or Render environment variables.")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the SQLAlchemy database instance
