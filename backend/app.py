@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -18,6 +18,21 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize the SQLAlchemy database instance
 db = SQLAlchemy(app)
 
+frontend_folder = os.path.join(os.getcwd(),"..","frontend","dist")
+
+#server static files from the "dist" folder under the "frontend" directory
+@app.route("/", defaults={"filename": ""})
+@app.route("/<path:filename>")
+def index(filename):
+    if not filename:
+        filename = "index.html"
+    try:
+        return send_from_directory(frontend_folder, filename)
+    except FileNotFoundError:
+        abort(404)  # Return a 404 error if the file is not found
+
+
+import routes
 
 # Import the Blueprints
 from routes.departmentRoutes import department_bp
@@ -46,11 +61,6 @@ app.register_blueprint(maintenance_bp)
 app.register_blueprint(departmentrequest_bp)
 
 
-
-
-@app.route('/')
-def hello():
-    return 'Hotdog'
 
 # Run the app
 if __name__ == '__main__':
