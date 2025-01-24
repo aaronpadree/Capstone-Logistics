@@ -12,12 +12,24 @@ from models.inventory import Inventory
 from models.maintenance import Maintenance
 from models.departmentrequest import DepartmentRequest
 
+# # Create the tables and define triggers
+# with app.app_context():
+#     try:
+#         db.drop_all()
+#         db.create_all()
+
+#         print("Tables successfully.")
+#     except Exception as e:
+#         print(f"An error occurred while setting up the database: {e}")
+
+
 # Create the tables and define triggers
 with app.app_context():
     try:
+        # Drop and recreate tables
         db.drop_all()
         db.create_all()
 
-        print("Tables successfully.")
+        print("Tables created successfully.")
     except Exception as e:
         print(f"An error occurred while setting up the database: {e}")
