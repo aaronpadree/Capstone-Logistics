@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+from flask_session import Session
 
 # Load environment variables from .env file
 load_dotenv()
@@ -10,6 +11,12 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+
+# Set a secret key for secure sessions
+app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')
+# Configure session type
+app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the filesystem
+Session(app)  # Initialize session management
 
 # # Get the database URI from environment variables
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')

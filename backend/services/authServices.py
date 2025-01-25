@@ -1,5 +1,5 @@
 import bcrypt
-from flask import make_response, jsonify
+from flask import make_response, jsonify, session
 from app import db
 from models.users import User, RoleEnum
 
@@ -45,5 +45,36 @@ def create_user(data):
         db.session.rollback()
         return make_response(jsonify({'error': str(e)}), 500)
 
-# def login():
+def login_user():
+    try:
+        username = data.get('username')
+        password = data.get('password')
+
+        # Check if the user exists
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return make_response(jsonify({'error': 'Invalid username or password'}), 401)
+
+        # Verify the password
+        if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+            return make_response(jsonify({'error': 'Invalid username or password'}), 401)
+
+        # Store user information in session
+        session['user_id'] = user.user_id
+        session['username'] = user.username
+        session['role'] = user.role.value
+
+        return make_response(jsonify({
+            'message': 'Login successful',
+            'user': {
+                'user_id': user.user_id,
+                'username': user.username,
+                'email': user.email,
+                'role': user.role.value
+            }
+        }), 200)
+    except Exception as e:
+        return make_response(jsonify({'error': str(e)}), 500)
+   
+
    
