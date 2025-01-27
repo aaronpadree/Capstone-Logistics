@@ -139,14 +139,14 @@ export default function Departments() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6 border-b-2 border-gray-500 pb-2">
-        <h2 className="text-2xl font-bold">Department Facility</h2>
+        <h2 className="text-2xl font-bold">Classroom</h2>
         <div className="flex items-center">
           <button
             onClick={openModal}
             type="button"
             className="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5"
           >
-            <FontAwesomeIcon icon={faPlus} className="mr-2" />  DEPARTMENT
+            <FontAwesomeIcon icon={faPlus} className="mr-2" />  Classroom
           </button>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function Departments() {
       )}
       {departments.length === 0 && !loading && !error && (
         <div className="flex justify-center items-center h-32 text-gray-500">
-          <p>No Department available.</p>
+          <p>No Classroom available.</p>
         </div>
       )}
 
@@ -173,7 +173,7 @@ export default function Departments() {
           <table className="w-full text-sm text-left rtl:text-right text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-4">Department Name</th>
+                <th scope="col" className="px-6 py-4">Classroom Name</th>
                 <th scope="col" className="px-6 py-4">Created at</th>
                 <th scope="col" className="px-6 py-4">Updated at</th>
                 <th scope="col" className="px-6 py-4">Actions</th>
@@ -216,10 +216,10 @@ export default function Departments() {
       {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-96">
-            <h2 className="text-xl font-semibold mb-4 text-center">Add Department</h2>
+            <h2 className="text-xl font-semibold mb-4 text-center">Add Classroom</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">Department Name</label>
+                <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">Classroom Name</label>
                 <input
                   type="text"
                   id="departmentName"
@@ -256,10 +256,10 @@ export default function Departments() {
       {isUpdateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-96">
-            <h2 className="text-xl font-semibold mb-4 text-center">Update Department</h2>
+            <h2 className="text-xl font-semibold mb-4 text-center">Update Classroom</h2>
             <form onSubmit={handleUpdate}>
               <div className="mb-4">
-                <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">Department Name</label>
+                <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">Classroom Name</label>
                 <input
                   type="text"
                   id="departmentName"

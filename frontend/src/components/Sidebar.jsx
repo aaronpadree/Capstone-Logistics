@@ -134,7 +134,7 @@ const Sidebar = () => {
               className={`text-white flex items-center rounded px-4 py-3 transition-all ${isActive('/departments') ? 'bg-green-800' : 'hover:bg-green-800'} text-[15px}`}
             >
               <FontAwesomeIcon icon={faBuilding} className="mr-2" />
-              <span>Department Facility</span>
+              <span>Classroom</span>
             </Link>
           </li>
 
@@ -242,7 +242,7 @@ const Sidebar = () => {
               className={`text-white flex items-center rounded px-4 py-3 transition-all ${isActive('/department-request') ? 'bg-green-800' : 'hover:bg-green-800'} text-[15px}`}
             >
               <FontAwesomeIcon icon={faEnvelopeOpenText} className="mr-2" />
-              <span>Department Request</span>
+              <span>Classroom Request</span>
             </Link>
           </li>
 

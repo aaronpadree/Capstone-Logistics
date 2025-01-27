@@ -62,7 +62,7 @@ const DepartmentRequestModal = ({ isOpen, onClose, onSubmit }) => {
     <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Create Department Request</h3>
+          <h3 className="text-xl font-bold">Create Classroom Request</h3>
           <button
             onClick={() => {
               onClose();
@@ -78,7 +78,7 @@ const DepartmentRequestModal = ({ isOpen, onClose, onSubmit }) => {
           {/* Department Name */}
           <div className="mb-4">
             <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">
-              Department Name
+              Classroom Name
             </label>
             <select
               id="departmentName"
@@ -88,9 +88,9 @@ const DepartmentRequestModal = ({ isOpen, onClose, onSubmit }) => {
               onChange={handleDepartmentChange}
               required
             >
-              <option value="">Select Department</option>
+              <option value="">Select Classroom</option>
               {departmentsLoading && <option>Loading...</option>}
-              {departmentsError && <option>Error loading departments</option>}
+              {departmentsError && <option>Error loading Classroom</option>}
               {departments && departments.length > 0 ? (
                 departments.map((department) => (
                   <option key={department.department_id} value={department.department_id}>
@@ -99,7 +99,7 @@ const DepartmentRequestModal = ({ isOpen, onClose, onSubmit }) => {
                 ))
               ) : (
                 <option value="" disabled>
-                  No available departments
+                  No available classroom
                 </option>
               )}
             </select>
