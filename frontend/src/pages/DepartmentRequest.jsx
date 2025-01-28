@@ -86,7 +86,7 @@ export default function DepartmentRequest() {
     <div className="p-6">
       {/* Header Section */}
       <div className="flex items-center justify-between mb-6 border-b-2 border-gray-500 pb-2">
-        <h2 className="text-2xl font-bold">Department Requests</h2>
+        <h2 className="text-2xl font-bold">Classroom Requests</h2>
         <div className="flex items-center">
           {/* Search Bar */}
           <label className="input input-bordered flex items-center gap-2 mr-5">
@@ -122,7 +122,7 @@ export default function DepartmentRequest() {
       )}
       {!loading && !error && filteredRequests.length === 0 && (
         <div className="flex justify-center items-center h-32 text-gray-500">
-          <p>No Department Requests available.</p>
+          <p>No Classroom Requests available.</p>
         </div>
       )}
 
@@ -132,7 +132,7 @@ export default function DepartmentRequest() {
           <table className="w-full text-sm text-left rtl:text-right text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-4">Department Name</th>
+                <th scope="col" className="px-6 py-4">Classroom Name</th>
                 <th scope="col" className="px-6 py-4">Product Name</th>
                 <th scope="col" className="px-6 py-4">Product Model</th>
                 <th scope="col" className="px-6 py-4">Product Brand</th>
