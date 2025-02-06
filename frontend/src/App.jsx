@@ -94,6 +94,11 @@ import DepartmentRequest from './pages/DepartmentRequest';
 import Login from "./components/Login";
 
 const App = () => {
+  const isAuthenticated = () => {
+    // Your authentication logic here
+    return localStorage.getItem("user") !== null;
+  };
+  
   return (
     <>
       <Toaster /> {/* Notifications component from react-hot-toast */}
