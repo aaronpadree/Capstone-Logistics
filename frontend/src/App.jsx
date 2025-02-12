@@ -91,17 +91,29 @@ import Inventory from './pages/Inventory';
 import Maintenance from './pages/Maintenance';
 import ProductSupplier from './pages/ProductSupplier';
 import DepartmentRequest from './pages/DepartmentRequest';
+import Login from "./components/Login";
 
 const App = () => {
+  const isAuthenticated = () => {
+    // Your authentication logic here
+    return localStorage.getItem("user") !== null;
+  };
+  
   return (
     <>
       <Toaster /> {/* Notifications component from react-hot-toast */}
       <Routes>
-        {/* Redirect root path to /dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Public route for Login */}
+        <Route
+          path="/login"
+          element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />}
+        />
 
         {/* Main wrapper for protected routes */}
-        <Route path="/" element={<Main />}>
+        <Route
+          path="/"
+          element={isAuthenticated() ? <Main /> : <Navigate to="/login" replace />}
+        >
           {/* Dashboard Route */}
           <Route path="/dashboard" element={<Dashboard />} />
           
@@ -143,7 +155,7 @@ const App = () => {
         </Route>
 
         {/* Redirect all other paths */}
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </>
   );
