@@ -1,9 +1,10 @@
-from flask import Flask, send_from_directory, abort, jsonify
+from flask import Flask, send_from_directory, abort, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from flask_session import Session
+from authlib.integrations.flask_client import OAuth
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,6 +29,20 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the SQLAlchemy database instance
 db = SQLAlchemy(app)
+
+# Initialize OAuth
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    redirect_uri='https://your-app.onrender.com/api/users/google-callback',
+    client_kwargs={'scope': 'openid profile email'},
+)
 
 frontend_folder = os.path.join(os.getcwd(), "..", "frontend", "dist")
 
@@ -81,6 +96,21 @@ def test_db():
 # Create the database tables
 with app.app_context():
     db.create_all()
+
+# Google OAuth login route
+@app.route('/login')
+def login():
+    redirect_uri = url_for('authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+# Google OAuth callback route
+@app.route('/api/users/google-callback')
+def authorize():
+    token = google.authorize_access_token()
+    resp = google.get('userinfo')
+    user_info = resp.json()
+    # Do something with the user info
+    return jsonify(user_info)
 
 # Run the app
 if __name__ == '__main__':
