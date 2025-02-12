@@ -40,7 +40,7 @@ google = oauth.register(
     access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
-    redirect_uri='https://your-app.onrender.com/api/users/google-callback',
+    redirect_uri='https://capstone-logistics.onrender.com/api/users/google-callback',
     client_kwargs={'scope': 'openid profile email'},
 )
 
