@@ -1,10 +1,11 @@
-from flask import Flask, send_from_directory, abort, jsonify, redirect, url_for
+from flask import Flask, send_from_directory, abort, jsonify, redirect, url_for, request, render_template, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from flask_session import Session
-from authlib.integrations.flask_client import OAuth
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_bcrypt import Bcrypt
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,20 +30,32 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the SQLAlchemy database instance
 db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-# Initialize OAuth
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    redirect_uri='https://capstone-logistics.onrender.com/api/users/google-callback',
-    client_kwargs={'scope': 'openid profile email'},
-)
+# User model
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Create an admin user if it doesn't exist
+@app.before_first_request
+def create_admin():
+    admin_email = "admin@gmail.com"
+    admin_password = "admin123"
+    if not User.query.filter_by(email=admin_email).first():
+        admin_user = User(
+            email=admin_email,
+            password=bcrypt.generate_password_hash(admin_password).decode('utf-8')
+        )
+        db.session.add(admin_user)
+        db.session.commit()
 
 frontend_folder = os.path.join(os.getcwd(), "..", "frontend", "dist")
 
@@ -97,20 +110,47 @@ def test_db():
 with app.app_context():
     db.create_all()
 
-# Google OAuth login route
-@app.route('/login')
-def login():
-    redirect_uri = url_for('authorize', _external=True)
-    return google.authorize_redirect(redirect_uri)
+# Email and password login route
+@app.route('/login', methods=['POST'])
+def login_post():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    user = User.query.filter_by(email=email).first()
 
-# Google OAuth callback route
-@app.route('/api/users/google-callback')
-def authorize():
-    token = google.authorize_access_token()
-    resp = google.get('userinfo')
-    user_info = resp.json()
-    # Do something with the user info
-    return jsonify(user_info)
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    login_user(user)
+    return jsonify({'success': True, 'user': {'email': user.email}})
+
+@app.route('/signup', methods=['POST'])
+def signup_post():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        return jsonify({'success': False, 'message': 'Email address already exists'}), 400
+
+    new_user = User(email=email, password=bcrypt.generate_password_hash(password).decode('utf-8'))
+    db.session.add(new_user)
+    db.session.commit()
+
+    login_user(new_user)
+    return jsonify({'success': True})
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html', name=current_user.email)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 # Run the app
 if __name__ == '__main__':

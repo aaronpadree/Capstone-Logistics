@@ -11,22 +11,19 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("/api/users/login", {
-        username: email,
+      const response = await axios.post("/login", {
+        email: email,
         password: password,
       });
 
       // Store user information in localStorage
       localStorage.setItem("user", JSON.stringify(response.data.user));
+
       // Redirect to dashboard
       window.location.href = "/dashboard";
     } catch (err) {
-      setError("Invalid username or password");
+      setError("Invalid email or password");
     }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = "/api/users/google-login";
   };
 
   return (
@@ -79,13 +76,6 @@ const Login = () => {
               Login
             </button>
           </form>
-
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition mt-4"
-          >
-            Login with Google
-          </button>
 
           <div className="text-center mt-4">
             <a href="/forgot-password" className="text-blue-500 hover:underline">
