@@ -30,32 +30,20 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the SQLAlchemy database instance
 db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
 
-# User model
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# Create an admin user if it doesn't exist
-@app.before_first_request
-def create_admin():
-    admin_email = "admin@gmail.com"
-    admin_password = "admin123"
-    if not User.query.filter_by(email=admin_email).first():
-        admin_user = User(
-            email=admin_email,
-            password=bcrypt.generate_password_hash(admin_password).decode('utf-8')
-        )
-        db.session.add(admin_user)
-        db.session.commit()
+# Initialize OAuth
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    redirect_uri='https://capstone-logistics.onrender.com/api/users/google-callback',
+    client_kwargs={'scope': 'openid profile email'},
+)
 
 frontend_folder = os.path.join(os.getcwd(), "..", "frontend", "dist")
 
