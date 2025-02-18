@@ -1,29 +1,48 @@
-from flask import Blueprint, request, session, make_response, jsonify
-from services.authServices import create_user, login_user, google_login, google_callback
+from flask import Blueprint, request, jsonify
+from flask_login import login_user, logout_user, login_required
+from app import db, bcrypt
+from models.users import User  # Correct import path
 
-auth_bp = Blueprint('users', __name__, url_prefix='/api/users')
+auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
-# Route to create a new user
-@auth_bp.route('/create', methods=['POST'])
-def create_new_user():
-    data = request.json 
-    return create_user(data) 
-
-# Log In Route
-@auth_bp.route('/login', methods=['POST'])
-def log_in_user():
+# Create new user
+@auth_bp.route('/signup', methods=['POST'])
+def signup():
     data = request.json
-    return login_user(data)
+    email = data.get('email')
+    password = data.get('password')
 
-@auth_bp.route('/google-login')
-def google_login_route():
-    return google_login()
+    # Check if user already exists
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({'success': False, 'message': 'Email already exists'}), 400
 
-@auth_bp.route('/google-callback')
-def google_callback_route():
-    return google_callback()
+    # Hash password
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    new_user = User(email=email, password=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
 
-@auth_bp.route('/logout', methods=['POST'])
-def log_out_user():
-    session.clear()
-    return make_response(jsonify({'message': 'Logged out successfully'}), 200)
+    login_user(new_user)
+    return jsonify({'success': True, 'message': 'User registered successfully'})
+
+# Login
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    login_user(user)
+    return jsonify({'success': True, 'message': 'Login successful', 'user': {'email': user.email}})
+
+# Logout
+@auth_bp.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({'success': True, 'message': 'Logout successful'})

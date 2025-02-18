@@ -18,6 +18,10 @@ CORS(app)
 app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')
 # Configure session type
 app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the filesystem
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'session:'
+app.config['SESSION_COOKIE_NAME'] = 'session'  # Add this line
 Session(app)  # Initialize session management
 
 # Get the database URI from environment variables
@@ -30,20 +34,28 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the SQLAlchemy database instance
 db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-# Initialize OAuth
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    redirect_uri='https://capstone-logistics.onrender.com/api/users/google-callback',
-    client_kwargs={'scope': 'openid profile email'},
-)
+# Import models after db initialization to prevent circular imports
+from models.users import User
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Create an admin user if it doesn't exist
+def create_admin():
+    admin_email = "admin@gmail.com"
+    admin_password = "admin123"
+    if not User.query.filter_by(email=admin_email).first():
+        admin_user = User(
+            email=admin_email,
+            password=bcrypt.generate_password_hash(admin_password).decode('utf-8')
+        )
+        db.session.add(admin_user)
+        db.session.commit()
 
 frontend_folder = os.path.join(os.getcwd(), "..", "frontend", "dist")
 
@@ -90,13 +102,16 @@ def test_db():
     try:
         # Attempt to query the database
         result = db.session.execute("SELECT 1")
-        return jsonify({"message": "Database connection successful", "result": [row[0] for row in result]})
+        return jsonify({"message": "Database connection successful", "result": [row[0] for row in result]}), 200
     except Exception as e:
         return jsonify({"message": "Database connection failed", "error": str(e)}), 500
 
-# Create the database tables
-with app.app_context():
-    db.create_all()
+# Create the database tables and ensure admin user exists
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Create database tables
+        create_admin()   # Create admin if not exists
+    app.run(debug=True)
 
 # Email and password login route
 @app.route('/login', methods=['POST'])
@@ -139,7 +154,3 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('index'))
-
-# Run the app
-if __name__ == '__main__':
-    app.run(debug=True)

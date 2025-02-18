@@ -1,28 +1,35 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import backgroundImage from "../assets/fdg-background.jpg";
 import logo from "../assets/logo.png";
-import axios from "axios"; // Import axios for making HTTP requests
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
     try {
-      const response = await axios.post("/login", {
-        email: email,
-        password: password,
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
+      const data = await response.json();
 
-      // Store user information in localStorage
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      // Redirect to dashboard
-      window.location.href = "/dashboard";
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        navigate("/dashboard");
+      } else {
+        setError(data.message || "Login failed. Please try again.");
+      }
     } catch (err) {
-      setError("Invalid email or password");
+      setError("Server error. Please try again later.");
     }
   };
 
@@ -43,8 +50,9 @@ const Login = () => {
             <p className="text-gray-600">INVENTORY MANAGEMENT SYSTEM</p>
           </div>
 
+          {error && <p className="text-red-500 text-center">{error}</p>}
+
           <form onSubmit={handleLogin}>
-            {error && <p className="text-red-500">{error}</p>}
             <div className="mb-4">
               <label className="block text-gray-700 font-semibold">Enter Email</label>
               <input
