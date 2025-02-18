@@ -21,7 +21,7 @@ app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the filesystem
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'session:'
-app.config['SESSION_COOKIE_NAME'] = 'session'  # Add this line
+app.config['SESSION_COOKIE_NAME'] = 'session'
 Session(app)  # Initialize session management
 
 # Get the database URI from environment variables
@@ -52,7 +52,8 @@ def create_admin():
     if not User.query.filter_by(email=admin_email).first():
         admin_user = User(
             email=admin_email,
-            password=bcrypt.generate_password_hash(admin_password).decode('utf-8')
+            password=bcrypt.generate_password_hash(admin_password).decode('utf-8'),
+            is_admin=True  # Set the is_admin flag to True
         )
         db.session.add(admin_user)
         db.session.commit()
@@ -121,7 +122,12 @@ def login_post():
     password = data.get('password')
     user = User.query.filter_by(email=email).first()
 
-    if not user or not bcrypt.check_password_hash(user.password, password):
+    if not user:
+        print("User not found")
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    if not bcrypt.check_password_hash(user.password, password):
+        print("Password does not match")
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
     login_user(user)
@@ -137,7 +143,8 @@ def signup_post():
     if user:
         return jsonify({'success': False, 'message': 'Email address already exists'}), 400
 
-    new_user = User(email=email, password=bcrypt.generate_password_hash(password).decode('utf-8'))
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    new_user = User(email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
 
