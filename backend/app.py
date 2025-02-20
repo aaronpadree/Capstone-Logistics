@@ -15,27 +15,25 @@ app = Flask(__name__)
 CORS(app)
 
 # Set a secret key for secure sessions
-app.secret_key = os.getenv('SECRET_KEY', 'pFt2ZaIcG1Pe47_WmE6_LA')
+app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 
 # Configure session storage (Filesystem-based)
-app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the filesystem
+app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'session:'
 app.config['SESSION_COOKIE_NAME'] = 'my_session'
-app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'flask_session')  # Explicit session storage path
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'flask_sessions')
+os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)  # Ensure session directory exists
+Session(app)
 
-Session(app)  # Initialize session management
-
-# Get the database URI from environment variables
+# Database Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-
 if not app.config['SQLALCHEMY_DATABASE_URI']:
-    raise RuntimeError("DATABASE_URL is not set. Check your .env file or Render environment variables.")
-
+    raise RuntimeError("DATABASE_URL is not set. Check your .env file.")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize the database and bcrypt
+# Initialize extensions
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
@@ -61,8 +59,8 @@ def create_admin():
         db.session.add(admin_user)
         db.session.commit()
 
+# Serve frontend files
 frontend_folder = os.path.join(os.getcwd(), "..", "frontend", "dist")
-
 @app.route("/", defaults={"filename": ""})
 @app.route("/<path:filename>")
 def index(filename):
@@ -107,14 +105,7 @@ def test_db():
     except Exception as e:
         return jsonify({"message": "Database connection failed", "error": str(e)}), 500
 
-# Create tables and ensure admin user exists
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        create_admin()
-    app.run(debug=True)
-
-# Login route
+# Authentication routes
 @app.route('/login', methods=['POST'])
 def login_post():
     data = request.get_json()
@@ -122,16 +113,12 @@ def login_post():
     password = data.get('password')
     user = User.query.filter_by(email=email).first()
 
-    if not user:
-        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
-
-    if not bcrypt.check_password_hash(user.password, password):
+    if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
     login_user(user)
     return jsonify({'success': True, 'user': {'email': user.email}})
 
-# Signup route
 @app.route('/signup', methods=['POST'])
 def signup_post():
     data = request.get_json()
@@ -140,7 +127,7 @@ def signup_post():
     user = User.query.filter_by(email=email).first()
 
     if user:
-        return jsonify({'success': False, 'message': 'Email address already exists'}), 400
+        return jsonify({'success': False, 'message': 'Email already exists'}), 400
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(email=email, password=hashed_password)
@@ -160,3 +147,10 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+# Run Flask App
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        create_admin()
+    app.run(host='0.0.0.0', port=10000, debug=True)
