@@ -7,7 +7,7 @@ from flask_session import Session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 # Initialize Flask app
@@ -15,13 +15,16 @@ app = Flask(__name__)
 CORS(app)
 
 # Set a secret key for secure sessions
-app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')
-# Configure session type
+app.secret_key = os.getenv('SECRET_KEY', 'pFt2ZaIcG1Pe47_WmE6_LA')
+
+# Configure session storage (Filesystem-based)
 app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the filesystem
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'session:'
-app.config['SESSION_COOKIE_NAME'] = 'session'
+app.config['SESSION_COOKIE_NAME'] = 'my_session'
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'flask_session')  # Explicit session storage path
+
 Session(app)  # Initialize session management
 
 # Get the database URI from environment variables
@@ -32,13 +35,13 @@ if not app.config['SQLALCHEMY_DATABASE_URI']:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize the SQLAlchemy database instance
+# Initialize the database and bcrypt
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Import models after db initialization to prevent circular imports
+# Import User model
 from models.users import User
 
 @login_manager.user_loader
@@ -53,14 +56,13 @@ def create_admin():
         admin_user = User(
             email=admin_email,
             password=bcrypt.generate_password_hash(admin_password).decode('utf-8'),
-            is_admin=True  # Set the is_admin flag to True
+            is_admin=True
         )
         db.session.add(admin_user)
         db.session.commit()
 
 frontend_folder = os.path.join(os.getcwd(), "..", "frontend", "dist")
 
-# Serve static files from the "dist" folder under the "frontend" directory
 @app.route("/", defaults={"filename": ""})
 @app.route("/<path:filename>")
 def index(filename):
@@ -69,9 +71,9 @@ def index(filename):
     try:
         return send_from_directory(frontend_folder, filename)
     except FileNotFoundError:
-        abort(404)  # Return a 404 error if the file is not found
+        abort(404)
 
-# Import the Blueprints
+# Import and register Blueprints
 from routes.departmentRoutes import department_bp
 from routes.supplierRoutes import supplier_bp
 from routes.productsRoutes import product_bp
@@ -84,7 +86,6 @@ from routes.productsupplierRoutes import product_supplier_bp
 from routes.maintenanceRoutes import maintenance_bp
 from routes.departmentrequestRoutes import departmentrequest_bp
 
-# Register the Blueprints
 app.register_blueprint(department_bp)
 app.register_blueprint(supplier_bp)
 app.register_blueprint(product_bp)
@@ -101,20 +102,19 @@ app.register_blueprint(departmentrequest_bp)
 @app.route("/test-db")
 def test_db():
     try:
-        # Attempt to query the database
         result = db.session.execute("SELECT 1")
         return jsonify({"message": "Database connection successful", "result": [row[0] for row in result]}), 200
     except Exception as e:
         return jsonify({"message": "Database connection failed", "error": str(e)}), 500
 
-# Create the database tables and ensure admin user exists
+# Create tables and ensure admin user exists
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create database tables
-        create_admin()   # Create admin if not exists
+        db.create_all()
+        create_admin()
     app.run(debug=True)
 
-# Email and password login route
+# Login route
 @app.route('/login', methods=['POST'])
 def login_post():
     data = request.get_json()
@@ -123,16 +123,15 @@ def login_post():
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        print("User not found")
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
     if not bcrypt.check_password_hash(user.password, password):
-        print("Password does not match")
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
     login_user(user)
     return jsonify({'success': True, 'user': {'email': user.email}})
 
+# Signup route
 @app.route('/signup', methods=['POST'])
 def signup_post():
     data = request.get_json()
