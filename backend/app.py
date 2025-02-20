@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Set a secret key for secure sessions
-app.secret_key = os.getenv('pFt2ZaIcG1Pe47_WmE6_LA', 'pFt2ZaIcG1Pe47_WmE6_LA')
+app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')
 # Configure session type
 app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in the filesystem
 app.config['SESSION_PERMANENT'] = False
